@@ -15,11 +15,11 @@
 - [Sponsors](#sponsors)
 - [Community](#community)
 - [Establishing connections](#establishing-connections)
-- [Connection options](#connection-options)
+- [链接可选项](#链接可选项)
 - [SSL options](#ssl-options)
-- [Terminating connections](#terminating-connections)
-- [Pooling connections](#pooling-connections)
-- [Pool options](#pool-options)
+- [终止链接](#终止链接)
+- [连接池](#连接池)
+- [池选项](#池选项)
 - [Pool events](#pool-events)
 - [Closing all the connections in a pool](#closing-all-the-connections-in-a-pool)
 - [PoolCluster](#poolcluster)
@@ -254,36 +254,31 @@ var connection = mysql.createConnection({
 });
 ```
 
-## Terminating connections
+## 终止链接
 
-There are two ways to end a connection. Terminating a connection gracefully is
-done by calling the `end()` method:
+有两种方法终止链接. 优雅的方式是调用 'end()' 方法:
 
 ```js
 connection.end(function(err) {
-  // The connection is terminated now
+  // 现在链接被终止
 });
 ```
 
-This will make sure all previously enqueued queries are still before sending a
-`COM_QUIT` packet to the MySQL server. If a fatal error occurs before the
-`COM_QUIT` packet can be sent, an `err` argument will be provided to the
-callback, but the connection will be terminated regardless of that.
+这会确保之前排队的查询仍然会发送'COM_QUIT'包给MySQL服务器.如果某个错误出现在'COM_QUIT'包之前,
+错误会传给回调函数,但是链接还是会被终止.
 
-An alternative way to end the connection is to call the `destroy()` method.
-This will cause an immediate termination of the underlying socket.
-Additionally `destroy()` guarantees that no more events or callbacks will be
-triggered for the connection.
+另一个可选的方法是调用'destroy()'方法来终止链接.这会导致一个当前socket立即终止.
+另外　'destroy()' 保证没有回调和方法会被触发.
 
 ```js
 connection.destroy();
 ```
 
-Unlike `end()` the `destroy()` method does not take a callback argument.
+不像 `end()` , `destroy()` 没有回调函数.
 
-## Pooling connections
+## 连接池
 
-Use pool directly.
+直接使用连接池.
 ```js
 var mysql = require('mysql');
 var pool  = mysql.createPool({
@@ -300,8 +295,7 @@ pool.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
 });
 ```
 
-Connections can be pooled to ease sharing a single connection, or managing
-multiple connections.
+连接池可以分享单个连接,或者管理更多连接.
 
 ```js
 var mysql = require('mysql');
@@ -316,54 +310,43 @@ pool.getConnection(function(err, connection) {
 });
 ```
 
-When you are done with a connection, just call `connection.release()` and the
-connection will return to the pool, ready to be used again by someone else.
+当你用完一个链接时,只要调用 'connection.release()', 那么连接池会返回到池中,准备复用.
 
 ```js
 var mysql = require('mysql');
 var pool  = mysql.createPool(...);
 
 pool.getConnection(function(err, connection) {
-  // Use the connection
+  // 使用链接
   connection.query( 'SELECT something FROM sometable', function(err, rows) {
-    // And done with the connection.
+    // 释放链接
     connection.release();
 
-    // Don't use the connection here, it has been returned to the pool.
+    // 不要使用链接, 链接已经回归到链接池了.
   });
 });
 ```
 
-If you would like to close the connection and remove it from the pool, use
-`connection.destroy()` instead. The pool will create a new connection the next
-time one is needed.
+如果你想关闭链接并且把它从池中移除, 使用 'connection.destroy()'.
+链接池会在需要的时候创建一个新的链接.
 
-Connections are lazily created by the pool. If you configure the pool to allow
-up to 100 connections, but only ever use 5 simultaneously, only 5 connections
-will be made. Connections are also cycled round-robin style, with connections
-being taken from the top of the pool and returning to the bottom.
+链接池总是在需要的时候才创建链接.如果你配置链接池允许有100个,但是你同时只用5个链接,
+那么就只有5个链接被创建. 链接池能够尽量复用链接, 从头选取并且存放到最后.
 
-When a previous connection is retrieved from the pool, a ping packet is sent
-to the server to check if the connection is still good.
+当之前一个链接重新复用,那么一个ping包会尝试检查这个链接是否成功.
 
-## Pool options
+## 池选项
 
-Pools accept all the same options as a connection. When creating a new
-connection, the options are simply passed to the connection constructor. In
-addition to those options pools accept a few extras:
+池可以接受所有的链接选项. 当创建一个新的链接, 那么它们会被简单的传给链接构造函数.
+池可以接受一些额外选项:
 
-* `acquireTimeout`: The milliseconds before a timeout occurs during the connection
-  acquisition. This is slightly different from `connectTimeout`, because acquiring
-  a pool connection does not always involve making a connection. (Default: `10000`)
-* `waitForConnections`: Determines the pool's action when no connections are
-  available and the limit has been reached. If `true`, the pool will queue the
-  connection request and call it when one becomes available. If `false`, the
-  pool will immediately call back with an error. (Default: `true`)
-* `connectionLimit`: The maximum number of connections to create at once.
-  (Default: `10`)
-* `queueLimit`: The maximum number of connection requests the pool will queue
-  before returning an error from `getConnection`. If set to `0`, there is no
-  limit to the number of queued connection requests. (Default: `0`)
+* `acquireTimeout`: 链接捕获超时毫秒. 这会有点跟 `connectTimeout` 不同,
+  因为捕获超时一般和创建链接不同. (默认: `10000`)
+* `waitForConnections`: 决定池在链接用完之后的行为.
+  `true`, 那么池会排队等候一个可用的链接.
+  `false`, 那么池会立刻回调错误. (默认: `true`)
+* `connectionLimit`: 马上创建的连接数. (默认: `10`)
+* `queueLimit`: 池请求的最大数值.`0`, 没有限制. (默认: `0`)
 
 ## Pool events
 
