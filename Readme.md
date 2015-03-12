@@ -179,56 +179,36 @@ appropriate. Any type of connection error (handshake or network) is considered
 a fatal error, see the [Error Handling](#error-handling) section for more
 information.
 
-## Connection options
+## 链接可选项
 
-When establishing a connection, you can set the following options:
+当建立一个连接时, 可以有如下选项:
 
-* `host`: The hostname of the database you are connecting to. (Default:
-  `localhost`)
-* `port`: The port number to connect to. (Default: `3306`)
-* `localAddress`: The source IP address to use for TCP connection. (Optional)
-* `socketPath`: The path to a unix domain socket to connect to. When used `host`
-  and `port` are ignored.
-* `user`: The MySQL user to authenticate as.
-* `password`: The password of that MySQL user.
-* `database`: Name of the database to use for this connection (Optional).
-* `charset`: The charset for the connection. This is called "collation" in the SQL-level
-  of MySQL (like `utf8_general_ci`). If a SQL-level charset is specified (like `utf8mb4`)
-  then the default collation for that charset is used. (Default: `'UTF8_GENERAL_CI'`)
-* `timezone`: The timezone used to store local dates. (Default: `'local'`)
-* `connectTimeout`: The milliseconds before a timeout occurs during the initial connection
-  to the MySQL server. (Default: `10000`)
-* `stringifyObjects`: Stringify objects instead of converting to values. See
-issue [#501](https://github.com/felixge/node-mysql/issues/501). (Default: `'false'`)
-* `insecureAuth`: Allow connecting to MySQL instances that ask for the old
-  (insecure) authentication method. (Default: `false`)
-* `typeCast`: Determines if column values should be converted to native
-   JavaScript types. (Default: `true`)
-* `queryFormat`: A custom query format function. See [Custom format](#custom-format).
-* `supportBigNumbers`: When dealing with big numbers (BIGINT and DECIMAL columns) in the database,
-  you should enable this option (Default: `false`).
-* `bigNumberStrings`: Enabling both `supportBigNumbers` and `bigNumberStrings` forces big numbers
-  (BIGINT and DECIMAL columns) to be always returned as JavaScript String objects (Default: `false`).
-  Enabling `supportBigNumbers` but leaving `bigNumberStrings` disabled will return big numbers as String
-  objects only when they cannot be accurately represented with [JavaScript Number objects] (http://ecma262-5.com/ELS5_HTML.htm#Section_8.5)
-  (which happens when they exceed the [-2^53, +2^53] range), otherwise they will be returned as
-  Number objects. This option is ignored if `supportBigNumbers` is disabled.
-* `dateStrings`: Force date types (TIMESTAMP, DATETIME, DATE) to be returned as strings rather then
-   inflated into JavaScript Date objects. (Default: `false`)
-* `debug`: Prints protocol details to stdout. (Default: `false`)
-* `trace`: Generates stack traces on `Error` to include call site of library
-   entrance ("long stack traces"). Slight performance penalty for most calls.
-   (Default: `true`)
-* `multipleStatements`: Allow multiple mysql statements per query. Be careful
-  with this, it exposes you to SQL injection attacks. (Default: `false`)
-* `flags`: List of connection flags to use other than the default ones. It is
-  also possible to blacklist default ones. For more information, check
-  [Connection Flags](#connection-flags).
-* `ssl`: object with ssl parameters or a string containing name of ssl profile. See [SSL options](#ssl-options).
+* `host`: 数据库的主机名称. (默认:`localhost`)
+* `port`: 链接的端口. (默认: `3306`)
+* `localAddress`: TCP链接的源地址. (可选)
+* `socketPath`: unix域套接字. 如使用了 `host` 和 `port`, 那么忽略.
+* `user`: 用户名称.
+* `password`: 密码.
+* `database`: 链接的数据库名称 (可选).
+* `charset`: 链接的字符编码. 在SQL中被叫做"校对"(像 'utf_general_ci').
+  如果SQL中的字符被设置为('utf8mb4'),那么就使用它.(默认: `'UTF8_GENERAL_CI'`)
+* `timezone`: 时区. (默认: `'local'`)
+* `connectTimeout`: 初始化数据库链接的超时毫秒.(默认: `10000`)
+* `stringifyObjects`: 对象字符串化. 浏览[#501](https://github.com/felixge/node-mysql/issues/501). (默认: `'false'`)
+* `insecureAuth`: 允许链接MySQL,用不安全的认证. (默认: `false`)
+* `typeCast`: 决定是否把列的值转换成原生的JavaScript对象. (默认: `true`)
+* `queryFormat`: 自定义查询格式函数. 浏览 [自定义格式](#custom-format).
+* `supportBigNumbers`: 当处理超大数值时 (大整数和浮点数), 你应该打开它 (默认: `false`).
+* `bigNumberStrings`: 把大数值转换成JavaScript字符串. (默认: `false`).
+  只开启 'supportBigNumbers' 会在数值能够准确的翻译成数值对象时才会转换 ([-2^53, +2^53] 区间).
+* `dateStrings`: 强制时间格式转化成字符串. (TIMESTAMP, DATETIME, DATE) (默认: `false`)
+* `debug`: 打印协议细节到标准输出. (默认: `false`)
+* `trace`: 生成栈细节,当产生错误的时候. (默认: `true`)
+* `multipleStatements`: 允许多状态查询. 当心注入攻击. (默认: `false`)
+* `flags`: 罗列链接标志. 详情浏览[Connection Flags](#connection-flags).
+* `ssl`: ssl参数对象或者是ssl配置文件名称.浏览 [SSL options](#ssl-options).
 
-
-In addition to passing these options as an object, you can also use a url
-string. For example:
+你也可以使用url字符串来替代对象配置. 例如:
 
 ```js
 var connection = mysql.createConnection('mysql://user:pass@host/db?debug=true&charset=BIG5_CHINESE_CI&timezone=-0700');
