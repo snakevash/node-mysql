@@ -20,12 +20,12 @@
 - [终止链接](#终止链接)
 - [连接池](#连接池)
 - [池选项](#池选项)
-- [Pool events](#pool-events)
-- [Closing all the connections in a pool](#closing-all-the-connections-in-a-pool)
-- [PoolCluster](#poolcluster)
-- [PoolCluster Option](#poolcluster-option)
-- [Switching users and altering connection state](#switching-users-and-altering-connection-state)
-- [Server disconnects](#server-disconnects)
+- [池事件](#池事件)
+- [关闭池中所有链接](#关闭池中所有链接)
+- [池集群](#池集群)
+- [池集群选项](#池集群选项)
+- [交换用户并且打印链接状态](#交换用户并且打印链接状态)
+- [服务器断开](#服务器断开)
 - [Performing queries](#performing-queries)
 - [Escaping query values](#escaping-query-values)
 - [Escaping query identifiers](#escaping-query-identifiers)
@@ -348,13 +348,12 @@ pool.getConnection(function(err, connection) {
 * `connectionLimit`: 马上创建的连接数. (默认: `10`)
 * `queueLimit`: 池请求的最大数值.`0`, 没有限制. (默认: `0`)
 
-## Pool events
+## 池事件
 
-### connection
+### 链接
 
-The pool will emit a `connection` event when a new connection is made within the pool. 
-If you need to set session variables on the connection before it gets used, you can
-listen to the `connection` event.
+池会触发 `connection` 事件, 当产生一个新的链接入池的时候.
+如果你想要实现会话变量, 你可以监听 `connection`事件
 
 ```js
 pool.on('connection', function (connection) {
@@ -362,53 +361,47 @@ pool.on('connection', function (connection) {
 });
 ```
 
-### enqueue
+### 入队
 
-The pool will emit an `enqueue` event when a callback has been queued to wait for
-an available connection.
+当回调等待一个可用的连接时,池会触发 `enqueue` 事件.
 
 ```js
 pool.on('enqueue', function () {
-  console.log('Waiting for available connection slot');
+  console.log('等待可用链接');
 });
 ```
 
-## Closing all the connections in a pool
+## 关闭池中所有链接
 
-When you are done using the pool, you have to end all the connections or the
-Node.js event loop will stay active until the connections are closed by the
-MySQL server. This is typically done if the pool is used in a script or when
-trying to gracefully shutdown a server. To end all the connections in the
-pool, use the `end` method on the pool:
+当你在使用池时,你应该关闭所有池中链接,不然事件循环总是处在激活状态.
+关闭所有的池中链接, 应该使用 `end` 方法:
 
 ```js
 pool.end(function (err) {
-  // all connections in the pool have ended
+  // 关闭所有的链接
 });
 ```
 
-The `end` method takes an _optional_ callback that you can use to know once
-all the connections have ended. The connections end _gracefully_, so all
-pending queries will still complete and the time to end the pool will vary.
+`end` 方法带有一个可选的回调,可以让你立马知道所有的链接已经被关闭.
+关闭是优雅的,所有剩下的请求都会被执行完.
 
-**Once `pool.end()` has been called, `pool.getConnection` and other operations
-can no longer be performed**
+**一旦 `pool.end()` 被执行, 那么 `pool.getConnection` 和 其他操作都不会执行**
 
-## PoolCluster
+## 池集群
 
-PoolCluster provides multiple hosts connection. (group & retry & selector)
+池集群提供多主机链接. (group & retry & selector)
 
 ```js
-// create
+// 创建
 var poolCluster = mysql.createPoolCluster();
 
-// add configurations
-poolCluster.add(config); // anonymous group
+// 增加配置
+poolCluster.add(config); // 匿名组
 poolCluster.add('MASTER', masterConfig);
 poolCluster.add('SLAVE1', slave1Config);
 poolCluster.add('SLAVE2', slave2Config);
 
-// remove configurations
+// 移除配置
 poolCluster.remove('SLAVE2'); // By nodeId
 poolCluster.remove('SLAVE*'); // By target group : SLAVE1-2
 
@@ -437,14 +430,13 @@ pool.getConnection(function (err, connection) {});
 poolCluster.end();
 ```
 
-## PoolCluster Option
-* `canRetry`: If `true`, `PoolCluster` will attempt to reconnect when connection fails. (Default: `true`)
-* `removeNodeErrorCount`: If connection fails, node's `errorCount` increases. 
-  When `errorCount` is greater than `removeNodeErrorCount`, remove a node in the `PoolCluster`. (Default: `5`)
-* `defaultSelector`: The default selector. (Default: `RR`)
-  * `RR`: Select one alternately. (Round-Robin)
-  * `RANDOM`: Select the node by random function.
-  * `ORDER`: Select the first node available unconditionally.
+## 池集群选项
+* `canRetry`: `true`, `池集群` 会尝试重新连接. (默认: `true`)
+* `removeNodeErrorCount`: 如果链接失败, `errorCount` 增加技术, 一旦超过最大值, 那么被移除.(默认: `5`)
+* `defaultSelector`: 默认选择器. (默认: `RR`)
+  * `RR`: 交替方式. (Round-Robin)
+  * `RANDOM`: 随机选取.
+  * `ORDER`: 顺序选取.
 
 ```js
 var clusterConfig = {
@@ -455,10 +447,9 @@ var clusterConfig = {
 var poolCluster = mysql.createPoolCluster(clusterConfig);
 ```
 
-## Switching users and altering connection state
+## 交换用户并且打印链接状态
 
-MySQL offers a changeUser command that allows you to alter the current user and
-other aspects of the connection without shutting down the underlying socket:
+MySQL提供一个交换用户命令可以在同一个socket中交换用户:
 
 ```js
 connection.changeUser({user : 'john'}, function(err) {
@@ -466,32 +457,25 @@ connection.changeUser({user : 'john'}, function(err) {
 });
 ```
 
-The available options for this feature are:
+这个特性可选的配置:
 
-* `user`: The name of the new user (defaults to the previous one).
-* `password`: The password of the new user (defaults to the previous one).
-* `charset`: The new charset (defaults to the previous one).
-* `database`: The new database (defaults to the previous one).
+* `user`: 新用户名称 (默认之前的名称).
+* `password`: 密码 (默认之前的名称).
+* `charset`: 编码 (默认之前的名称).
+* `database`: 数据库名称 (默认之前的名称).
 
-A sometimes useful side effect of this functionality is that this function also
-resets any connection state (variables, transactions, etc.).
+这个功能会重置链接的状态(变量,事务 等等).
 
-Errors encountered during this operation are treated as fatal connection errors
-by this module.
+发生会错误会当做链接错误.
 
-## Server disconnects
+## 服务器断开
 
-You may lose the connection to a MySQL server due to network problems, the
-server timing you out, the server being restarted, or crashing. All of these
-events are considered fatal errors, and will have the `err.code =
-'PROTOCOL_CONNECTION_LOST'`.  See the [Error Handling](#error-handling) section
-for more information.
+当网络发生问题时会断开服务器,或者服务重启之类的.
+所有这些都会发生链接错误,并且抛出 `err.code='PROTOCOL_CONNECTION_LOST'`. 浏览[错误处理](#错误处理).
 
-Re-connecting a connection is done by establishing a new connection. Once
-terminated, an existing connection object cannot be re-connected by design.
+重新链接是断开旧的重建新的.一旦终止,一个存在的链接将不可重连.
 
-With Pool, disconnected connections will be removed from the pool freeing up
-space for a new connection to be created on the next getConnection call.
+在池中,断开的链接会给新的连接腾出位置.
 
 ## Performing queries
 
